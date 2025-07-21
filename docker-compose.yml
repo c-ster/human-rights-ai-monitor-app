@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    ports:
+      - "8000:8000"
+    depends_on:
+      - mongo
+    volumes:
+      - ./backend/app:/code/app
+    environment:
+      - DATABASE_URL=mongodb://mongo:27017
+      - HUMAN_RIGHTS_AI_MONITOR_OAI_KEY=${OPENAI_API_KEY}
+
+
+  mongo:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
