@@ -11,11 +11,46 @@
     <div class="container">
         <header>
             <h1>Human Rights & AI Monitor</h1>
-            <button id="run-pipeline-btn" class="button">Fetch New Articles</button>
+            <nav class="nav-buttons">
+                <button id="view-public-btn" class="button active">Public Feed</button>
+                <button id="view-curation-btn" class="button">Curation Dashboard</button>
+                <button id="run-pipeline-btn" class="button">Fetch New Articles</button>
+                <button id="run-complete-pipeline-btn" class="button">Run Complete Pipeline</button>
+            </nav>
         </header>
         <main id="content-container">
             <!-- Articles will be loaded here -->
         </main>
+        
+        <div id="curation-container" style="display: none;">
+            <h2>Content Curation Dashboard</h2>
+            <div id="pending-content">
+                <!-- Pending content for curation will be loaded here -->
+            </div>
+        </div>
+        
+        <!-- Curation Modal -->
+        <div id="curation-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h3>Curate Content</h3>
+                <div id="modal-content-details"></div>
+                <div class="curation-actions">
+                    <button id="approve-btn" class="button approve">Approve</button>
+                    <button id="reject-btn" class="button reject">Reject</button>
+                    <button id="edit-btn" class="button edit">Edit</button>
+                </div>
+                <div id="edit-form" style="display: none;">
+                    <label for="edited-title">Title:</label>
+                    <input type="text" id="edited-title" />
+                    <label for="edited-summary">Summary:</label>
+                    <textarea id="edited-summary" rows="4"></textarea>
+                    <label for="editor-notes">Editor Notes:</label>
+                    <textarea id="editor-notes" rows="2"></textarea>
+                    <button id="save-edit-btn" class="button">Save Changes</button>
+                </div>
+            </div>
+        </div>
         <div id="loader" class="loader-container" style="display: none;">
             <div class="loader"></div>
             <p>Processing feeds... this may take a moment.</p>

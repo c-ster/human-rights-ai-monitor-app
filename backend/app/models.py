@@ -31,6 +31,11 @@ class ContentType(str, Enum):
     PODCAST = "Podcast"
     PAPER = "Paper"
 
+class ContentStatus(str, Enum):
+    PENDING = "pending"
+    APPROVED = "approved"
+    REJECTED = "rejected"
+
 class Content(BaseModel):
     # Use our custom PyObjectId type for the id field.
     # It will be aliased as '_id' in the database.
@@ -46,8 +51,13 @@ class Content(BaseModel):
     relevance_score: float = Field(default=0.0)
     helpful_votes: int = Field(default=0)
     not_helpful_votes: int = Field(default=0)
+    status: ContentStatus = Field(default=ContentStatus.PENDING)
+    editor_notes: Optional[str] = None
+    metadata: Optional[dict] = None
+    feedback: Optional[List[dict]] = None
     published_at: datetime
     created_at: datetime = Field(default_factory=datetime.now)
+    updated_at: Optional[datetime] = None
     curated: bool = Field(default=False)
 
     # Use ConfigDict for Pydantic V2 configuration.

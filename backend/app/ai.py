@@ -1,4 +1,6 @@
 import os
+import aiohttp
+import tempfile
 from openai import OpenAI, RateLimitError, APIError
 from .models import Category
 
@@ -52,5 +54,73 @@ async def get_category(text: str) -> Category:
         print(f"OpenAI API error getting category: {e}")
         return Category.RISK # Default to risk on failure
     except Exception as e:
-        print(f"An unexpected error occurred while getting category: {e}")
+        print(f"An unexpected error occurred while categorizing: {e}")
         return Category.RISK # Default to risk on failure
+
+async def transcribe_audio(audio_url: str) -> str:
+    """
+    Downloads audio from URL and transcribes it using OpenAI Whisper API.
+    """
+    try:
+        # Download audio file
+        async with aiohttp.ClientSession() as session:
+            async with session.get(audio_url) as response:
+                if response.status != 200:
+                    print(f"Failed to download audio from {audio_url}")
+                    return ""
+                
+                # Save to temporary file
+                with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as temp_file:
+                    temp_file.write(await response.read())
+                    temp_file_path = temp_file.name
+        
+        # Transcribe using OpenAI Whisper
+        with open(temp_file_path, "rb") as audio_file:
+            transcript = client.audio.transcriptions.create(
+                model="whisper-1",
+                file=audio_file,
+                response_format="text"
+            )
+        
+        # Clean up temporary file
+        os.unlink(temp_file_path)
+        
+        return transcript
+        
+    except (RateLimitError, APIError) as e:
+        print(f"OpenAI API error during transcription: {e}")
+        return ""
+    except Exception as e:
+        print(f"Error transcribing audio from {audio_url}: {e}")
+        return ""
+
+async def analyze_relevance(text: str) -> float:
+    """
+    Analyzes the relevance of content to AI and human rights topics.
+    Returns a score between 0.0 and 1.0.
+    """
+    try:
+        response = client.chat.completions.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are an expert in AI and human rights. Rate the relevance of the following text to AI and human rights topics on a scale of 0.0 to 1.0, where 1.0 is highly relevant and 0.0 is not relevant at all. Respond with only the numerical score."},
+                {"role": "user", "content": text}
+            ],
+            max_tokens=10,
+            temperature=0.0,
+        )
+        
+        score_str = response.choices[0].message.content.strip()
+        try:
+            score = float(score_str)
+            return max(0.0, min(1.0, score))  # Ensure score is between 0 and 1
+        except ValueError:
+            print(f"Invalid relevance score format: {score_str}")
+            return 0.5  # Default to medium relevance
+            
+    except (RateLimitError, APIError) as e:
+        print(f"OpenAI API error during relevance analysis: {e}")
+        return 0.5
+    except Exception as e:
+        print(f"Error analyzing relevance: {e}")
+        return 0.5 # Default to risk on failure
