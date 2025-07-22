@@ -1,0 +1,227 @@
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background-color: var(--background-color);
+  color: var(--text-color);
+}
+
+.app-header {
+  background-color: var(--header-background);
+  color: var(--header-text-color);
+  padding: 2rem 4rem;
+  text-align: center;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+.app-header p {
+  margin: 0.5rem 0 0;
+  font-size: 1.1rem;
+  color: var(--text-secondary-color);
+}
+
+.main-nav {
+  margin-top: 1.5rem;
+  display: flex;
+  justify-content: center;
+  gap: 2rem;
+  border-top: 1px solid var(--border-color);
+  padding-top: 1rem;
+}
+
+.main-nav a {
+  color: var(--text-secondary-color);
+  text-decoration: none;
+  font-weight: 500;
+  padding: 0.5rem 0;
+  border-bottom: 2px solid transparent;
+  transition: color 0.2s ease, border-bottom-color 0.2s ease;
+}
+
+.main-nav a:hover, .main-nav a.active {
+  color: var(--primary-color);
+  border-bottom-color: var(--primary-color);
+}
+
+.content-area {
+  flex-grow: 1;
+  padding: 2rem 4rem;
+  max-width: 1400px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.filter-controls {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding: 0 4rem;
+  max-width: 1400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.search-input, .category-select {
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  font-size: 1rem;
+  background-color: var(--card-background);
+  color: var(--text-color);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.search-input:focus, .category-select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px var(--primary-color-light);
+}
+
+.search-input {
+  flex-grow: 1;
+}
+
+.category-select {
+  min-width: 200px;
+}
+
+.articles-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 2rem;
+}
+
+.article-card {
+  background-color: var(--card-background);
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+}
+
+.article-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  font-size: 0.85rem;
+}
+
+.category-tag, .source-tag {
+  padding: 0.3rem 0.6rem;
+  border-radius: 12px;
+  font-weight: 600;
+}
+
+.category-tag {
+  background-color: var(--primary-color-light);
+  color: var(--primary-color);
+}
+
+.source-tag {
+  background-color: #e9ecef;
+  color: #495057;
+}
+
+.article-card h2 {
+  font-size: 1.25rem;
+  margin: 0 0 0.75rem;
+  line-height: 1.4;
+}
+
+.article-card h2 a {
+  color: var(--text-color);
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.article-card h2 a:hover {
+  color: var(--primary-color);
+}
+
+.summary {
+  flex-grow: 1;
+  color: var(--text-secondary-color);
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}
+
+.card-footer {
+  font-size: 0.85rem;
+  color: var(--text-secondary-color);
+  border-top: 1px solid var(--border-color);
+  padding-top: 1rem;
+  margin-top: auto;
+}
+
+.loader, .error-message, .no-articles {
+  text-align: center;
+  font-size: 1.2rem;
+  padding: 4rem;
+  color: var(--text-secondary-color);
+}
+
+.error-message {
+  color: #d9534f;
+}
+
+.feedback-controls {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.feedback-btn {
+  background: none;
+  border: 1px solid var(--border-color);
+  padding: 0.3rem 0.8rem;
+  border-radius: 15px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
+}
+
+.feedback-btn.helpful {
+  color: #28a745;
+  border-color: #28a745;
+}
+
+.feedback-btn.helpful:hover {
+  background-color: rgba(40, 167, 69, 0.1);
+}
+
+.feedback-btn.not-helpful {
+  color: #dc3545;
+  border-color: #dc3545;
+}
+
+.feedback-btn.not-helpful:hover {
+  background-color: rgba(220, 53, 69, 0.1);
+}
+
+.feedback-thanks {
+  font-style: italic;
+  color: var(--text-secondary);
+}
+
+.app-footer {
+  text-align: center;
+  padding: 1.5rem;
+  background-color: var(--header-background);
+  border-top: 1px solid var(--border-color);
+  font-size: 0.9rem;
+  color: var(--text-secondary-color);
+}

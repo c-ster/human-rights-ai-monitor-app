@@ -6,9 +6,12 @@ from .models import Category
 
 # The OpenAI client will automatically read the OPENAI_API_KEY environment variable.
 # Ensure it is set in your environment, e.g., in docker-compose.yml.
-client = OpenAI(api_key=os.environ.get("HUMAN_RIGHTS_AI_MONITOR_OAI_KEY"))
+api_key = os.environ.get("OPENAI_API_KEY")
+client = OpenAI(api_key=api_key) if api_key else None
 
 async def get_summary(text: str) -> str:
+    if not client:
+        return "(AI summary disabled: API key not configured)"
     """
     Generates a summary for the given text using the OpenAI API.
     """
@@ -33,6 +36,8 @@ async def get_summary(text: str) -> str:
         return "(AI summary failed.)"
 
 async def get_category(text: str) -> Category:
+    if not client:
+        return Category.UNCATEGORIZED
     """
     Categorizes the given text as Risk-focused or Opportunity-focused using the OpenAI API.
     """
@@ -58,6 +63,8 @@ async def get_category(text: str) -> Category:
         return Category.RISK # Default to risk on failure
 
 async def transcribe_audio(audio_url: str) -> str:
+    if not client:
+        raise HTTPException(status_code=500, detail="Audio transcription is disabled: API key not configured")
     """
     Downloads audio from URL and transcribes it using OpenAI Whisper API.
     """
@@ -67,6 +74,7 @@ async def transcribe_audio(audio_url: str) -> str:
             async with session.get(audio_url) as response:
                 if response.status != 200:
                     print(f"Failed to download audio from {audio_url}")
+                    return "(Audio transcription failed: Could not download file)"
                     return ""
                 
                 # Save to temporary file

@@ -1,7 +1,13 @@
 import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 from fastapi import FastAPI, HTTPException, Query
+from fastapi.middleware.cors import CORSMiddleware
 from typing import List, Optional
 from pydantic import BaseModel
+from datetime import datetime
 from . import pipeline
 from .db import content_collection, client
 from .models import Content, ContentStatus
@@ -9,10 +15,26 @@ from bson import ObjectId
 from datetime import datetime
 
 app = FastAPI(
-    title="Human Rights & AI Monitor",
-    description="A service to discover, summarize, and prioritize content on AI and human rights.",
-    version="1.0.0"
+    title="Human Rights & AI Monitor API"
 )
+
+# CORS Middleware
+origins = [
+    "http://localhost:5173", # Vite default port
+    "http://localhost",
+    "http://localhost:8080",
+]
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.description = "A service to discover, summarize, and prioritize content on AI and human rights."
+app.version = "1.0.0"
 
 @app.on_event("startup")
 async def startup_db_client():
@@ -26,6 +48,37 @@ async def shutdown_db_client():
 @app.get("/")
 async def root():
     return {"message": "Welcome to the Human Rights & AI Monitor API"}
+
+
+@app.post("/content/approve-latest")
+async def approve_latest_content():
+    """
+    A temporary endpoint to approve the 10 most recent pending articles.
+    This helps in testing the main dashboard without manual curation.
+    """
+    try:
+        # Find the 10 most recent pending articles
+        pending_articles = await content_collection.find(
+            {"status": "pending"}
+        ).sort("created_at", -1).limit(10).to_list(10)
+
+        if not pending_articles:
+            return {"status": "noop", "message": "No pending articles to approve."}
+
+        # Get the IDs of these articles
+        article_ids = [article['_id'] for article in pending_articles]
+
+        # Update their status to 'approved'
+        result = await content_collection.update_many(
+            {"_id": {"$in": article_ids}},
+            {"$set": {"status": "approved", "updated_at": datetime.now()}}
+        )
+
+        return {"status": "success", "message": f"{result.modified_count} articles approved."}
+
+    except Exception as e:
+        print(f"Error approving latest content: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/pipeline/run")
 async def run_pipeline_endpoint():
@@ -139,14 +192,37 @@ async def curate_content(action: CurationAction):
         print(f"Error curating content: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+@app.get("/content/status-counts")
+async def get_status_counts():
+    """
+    A diagnostic endpoint to get the count of content items by status.
+    """
+    try:
+        pipeline = [
+            {"$group": {"_id": "$status", "count": {"$sum": 1}}}
+        ]
+        counts = await content_collection.aggregate(pipeline).to_list(None)
+        return {item['_id']: item['count'] for item in counts}
+    except Exception as e:
+        print(f"Error getting status counts: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 @app.get("/content/approved", response_model=List[Content])
-async def get_approved_content(limit: int = Query(20, ge=1, le=100)):
+async def get_approved_content(
+    limit: int = Query(20, ge=1, le=100),
+    category: Optional[str] = Query(None)
+):
     """
     Retrieves approved content for public display.
     """
     try:
+        find_filter = {"status": "approved"}
+        if category:
+            find_filter["category"] = category
+
         contents = await content_collection.find(
-            {"status": "approved"}
+            find_filter
         ).sort("published_at", -1).limit(limit).to_list(limit)
         return contents
     except Exception as e:
@@ -188,6 +264,21 @@ async def submit_feedback(feedback: FeedbackSubmission):
     except Exception as e:
         print(f"Error submitting feedback: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/content/categories", response_model=List[str])
+async def get_categories():
+    """
+    Retrieves a list of unique content categories.
+    """
+    try:
+        # The distinct method returns a list of unique values for a given field
+        categories = await content_collection.distinct("category")
+        # Filter out any potential null or empty string values
+        return [cat for cat in categories if cat]
+    except Exception as e:
+        print(f"Error fetching categories: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
 
 @app.get("/content/search")
 async def search_content(
