@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import './Dashboard.css';
 
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = 'http://127.0.0.1:8000';
 
 function Dashboard() {
   const [articles, setArticles] = useState([]);
@@ -108,7 +108,7 @@ function Dashboard() {
                     {article.title}
                   </a>
                 </h2>
-                <p className="summary">{article.summary ? article.summary[0] : 'No summary available.'}</p>
+                {article.summary && article.summary.length > 0 && <p className="summary">{article.summary[0]}</p>}
               </article>
             ))
           ) : (

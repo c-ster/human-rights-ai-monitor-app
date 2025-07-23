@@ -1,8 +1,14 @@
+import os
+from dotenv import load_dotenv
 from pydantic import BaseModel, Field, HttpUrl, ConfigDict
 from typing import List, Optional, Any
 from datetime import datetime
 from enum import Enum
 from bson import ObjectId
+
+load_dotenv()
+
+DATABASE_URL = os.getenv("DATABASE_URL")
 
 # This is a custom type to handle MongoDB's ObjectId.
 # Pydantic V2 requires this setup for custom types.

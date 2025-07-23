@@ -2,7 +2,7 @@ import feedparser
 import asyncio
 import aiohttp
 import json
-from .db import content_collection
+from motor.motor_asyncio import AsyncIOMotorCollection
 from .models import Content, ContentType, Category
 from .ai import get_summary, get_category, transcribe_audio
 import re
@@ -38,7 +38,7 @@ PODCAST_FEEDS = [
     "https://feeds.feedburner.com/futureofwork"  # Future of Work podcast
 ]
 
-async def fetch_and_store_feeds():
+async def fetch_and_store_feeds(collection: AsyncIOMotorCollection):
     """Fetches content from RSS feeds and stores new entries in the database."""
     for url in RSS_FEEDS:
         print(f"Fetching feed: {url}")
@@ -46,7 +46,7 @@ async def fetch_and_store_feeds():
         
         for entry in feed.entries:
             # Check if the article already exists in the DB
-            existing_content = await content_collection.find_one({"url": entry.link})
+            existing_content = await collection.find_one({"url": entry.link})
             if existing_content:
                 continue # Skip if it already exists
 
@@ -75,12 +75,12 @@ async def fetch_and_store_feeds():
             content_dict['url'] = str(content_item.url)
 
             # Insert the content into the database
-            result = await content_collection.insert_one(content_dict)
+            result = await collection.insert_one(content_dict)
             print(f"Inserted content with ID: {result.inserted_id}")
 
     return {"status": "success", "message": "Feeds processed successfully"}
 
-async def fetch_academic_content():
+async def fetch_academic_content(collection: AsyncIOMotorCollection):
     """Fetches academic content using Google Scholar-like search."""
     print("Fetching academic content...")
     
@@ -97,7 +97,7 @@ async def fetch_academic_content():
                         
                         for paper in data.get('data', []):
                             # Check if paper already exists
-                            existing_content = await content_collection.find_one({"url": paper.get('url', '')})
+                            existing_content = await collection.find_one({"url": paper.get('url', '')})
                             if existing_content:
                                 continue
                             
@@ -123,7 +123,7 @@ async def fetch_academic_content():
                                 content_dict = content_item.dict(by_alias=True, exclude_none=True)
                                 content_dict['url'] = str(content_item.url)
                                 
-                                result = await content_collection.insert_one(content_dict)
+                                result = await collection.insert_one(content_dict)
                                 print(f"Inserted academic content: {paper.get('title', 'Untitled')}")
                     
                     # Rate limiting for API
@@ -135,7 +135,7 @@ async def fetch_academic_content():
     
     return {"status": "success", "message": "Academic content processed"}
 
-async def fetch_podcast_content():
+async def fetch_podcast_content(collection: AsyncIOMotorCollection):
     """Fetches and processes podcast content with speech-to-text."""
     print("Fetching podcast content...")
     
@@ -145,7 +145,7 @@ async def fetch_podcast_content():
             
             for entry in feed.entries[:3]:  # Limit to 3 most recent episodes
                 # Check if episode already exists
-                existing_content = await content_collection.find_one({"url": entry.link})
+                existing_content = await collection.find_one({"url": entry.link})
                 if existing_content:
                     continue
                 
@@ -178,7 +178,7 @@ async def fetch_podcast_content():
                         content_dict = content_item.dict(by_alias=True, exclude_none=True)
                         content_dict['url'] = str(content_item.url)
                         
-                        result = await content_collection.insert_one(content_dict)
+                        result = await collection.insert_one(content_dict)
                         print(f"Inserted podcast content: {entry.title}")
                 
                 # Rate limiting
@@ -190,20 +190,20 @@ async def fetch_podcast_content():
     
     return {"status": "success", "message": "Podcast content processed"}
 
-async def run_complete_pipeline():
+async def run_complete_pipeline(collection: AsyncIOMotorCollection):
     """Runs the complete content pipeline including RSS, academic, and podcast sources."""
     print("Starting complete content pipeline...")
     
     results = []
     
     # Run all pipeline components
-    rss_result = await fetch_and_store_feeds()
+    rss_result = await fetch_and_store_feeds(collection)
     results.append(rss_result)
     
-    academic_result = await fetch_academic_content()
+    academic_result = await fetch_academic_content(collection)
     results.append(academic_result)
     
-    podcast_result = await fetch_podcast_content()
+    podcast_result = await fetch_podcast_content(collection)
     results.append(podcast_result)
     
     return {

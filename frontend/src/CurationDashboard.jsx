@@ -34,7 +34,7 @@ function CurationDashboard() {
       const response = await fetch(`${API_BASE_URL}/content/curate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ article_id: articleId, action: action }),
+                body: JSON.stringify({ content_id: articleId, action: action }),
       });
 
       if (!response.ok) {
@@ -74,7 +74,7 @@ function CurationDashboard() {
                     {article.title}
                   </a>
                 </h2>
-                <p className="summary">{article.summary ? article.summary[0] : 'No summary available.'}</p>
+                {article.summary && article.summary.length > 0 && article.summary[0] && <p className="summary">{article.summary[0]}</p>}
                 <div className="card-footer curation-controls">
                   <button onClick={() => handleCuration(article._id, 'approve')} className="curate-btn approve">
                     Approve

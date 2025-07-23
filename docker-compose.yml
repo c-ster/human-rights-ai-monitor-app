@@ -1,7 +1,8 @@
-version: '3.8'
+
 
 services:
   backend:
+    platform: linux/amd64
     build: ./backend
     ports:
       - "8000:8000"

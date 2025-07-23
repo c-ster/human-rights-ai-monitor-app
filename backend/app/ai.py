@@ -1,17 +1,25 @@
 import os
 import aiohttp
 import tempfile
+from fastapi import HTTPException
 from openai import OpenAI, RateLimitError, APIError
 from .models import Category
 
-# The OpenAI client will automatically read the OPENAI_API_KEY environment variable.
-# Ensure it is set in your environment, e.g., in docker-compose.yml.
-api_key = os.environ.get("OPENAI_API_KEY")
-client = OpenAI(api_key=api_key) if api_key else None
+_openai_client = None
+
+def get_openai_client():
+    """Lazily initialize and return the OpenAI client."""
+    global _openai_client
+    if _openai_client is None:
+        api_key = os.environ.get("OPENAI_API_KEY")
+        if api_key:
+            _openai_client = OpenAI(api_key=api_key)
+    return _openai_client
 
 async def get_summary(text: str) -> str:
+    client = get_openai_client()
     if not client:
-        return "(AI summary disabled: API key not configured)"
+        return ""
     """
     Generates a summary for the given text using the OpenAI API.
     """
@@ -29,13 +37,14 @@ async def get_summary(text: str) -> str:
         return summary
     except (RateLimitError, APIError) as e:
         print(f"OpenAI API error generating summary: {e}")
-        return "(AI summary failed due to API error.)"
+        return ""
     except Exception as e:
         # Catching other potential exceptions, e.g., network issues
         print(f"An unexpected error occurred while generating summary: {e}")
-        return "(AI summary failed.)"
+        return ""
 
 async def get_category(text: str) -> Category:
+    client = get_openai_client()
     if not client:
         return Category.UNCATEGORIZED
     """
@@ -63,8 +72,10 @@ async def get_category(text: str) -> Category:
         return Category.RISK # Default to risk on failure
 
 async def transcribe_audio(audio_url: str) -> str:
+    client = get_openai_client()
     if not client:
-        raise HTTPException(status_code=500, detail="Audio transcription is disabled: API key not configured")
+        print("Audio transcription is disabled: API key not configured")
+        return ""
     """
     Downloads audio from URL and transcribes it using OpenAI Whisper API.
     """
@@ -103,6 +114,9 @@ async def transcribe_audio(audio_url: str) -> str:
         return ""
 
 async def analyze_relevance(text: str) -> float:
+    client = get_openai_client()
+    if not client:
+        return 0.5
     """
     Analyzes the relevance of content to AI and human rights topics.
     Returns a score between 0.0 and 1.0.

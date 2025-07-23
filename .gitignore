@@ -103,3 +103,5 @@ virtualenv/
 # node.js
 node_modules/
 npm-debug.log
+backend/temp_diagnose_data.py
+backend/temp_repair_dates.py

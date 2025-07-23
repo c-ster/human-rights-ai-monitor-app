@@ -3,7 +3,6 @@ python-dotenv
 uvicorn[standard]
 motor
 pydantic[email]
-python-dotenv
 feedparser
 openai
 aiohttp
